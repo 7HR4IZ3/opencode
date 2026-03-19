@@ -450,6 +450,46 @@ export function Session() {
       },
     },
     {
+      title: "Retry session",
+      value: "session.retry",
+      category: "Session",
+      slash: {
+        name: "retry",
+        aliases: ["continue"],
+      },
+      onSelect: async (dialog) => {
+        const selectedModel = local.model.current()
+        if (!selectedModel) {
+          toast.show({
+            variant: "warning",
+            message: "Connect a provider to continue this session",
+            duration: 3000,
+          })
+          return
+        }
+        await sdk.client.session
+          .retry({
+            sessionID: route.sessionID,
+            agent: local.agent.current().name,
+            model: {
+              providerID: selectedModel.providerID,
+              modelID: selectedModel.modelID,
+            },
+            variant: local.model.variant.current(),
+          })
+          .then(() => {
+            dialog.clear()
+            toBottom()
+          })
+          .catch((error) => {
+            toast.show({
+              message: error instanceof Error ? error.message : "Failed to continue session",
+              variant: "error",
+            })
+          })
+      },
+    },
+    {
       title: "Compact session",
       value: "session.compact",
       keybind: "session_compact",

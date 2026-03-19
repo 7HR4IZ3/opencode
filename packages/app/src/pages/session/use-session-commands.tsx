@@ -458,6 +458,62 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
         },
       }),
       sessionCommand({
+        id: "session.retry",
+        title: "Retry session",
+        description: "Continue a stuck session after a network hiccup or interrupted response",
+        slash: "retry",
+        disabled: !params.id || visibleUserMessages().length === 0,
+        onSelect: async () => {
+          const sessionID = params.id
+          if (!sessionID) return
+          const model = local.model.current()
+          if (!model) {
+            showToast({
+              title: language.t("toast.model.none.title"),
+              description: language.t("toast.model.none.description"),
+            })
+            return
+          }
+          await sdk.client.session.retry({
+            sessionID,
+            agent: local.agent.current().name,
+            model: {
+              providerID: model.provider.id,
+              modelID: model.id,
+            },
+            variant: local.model.variant.current(),
+          })
+        },
+      }),
+      sessionCommand({
+        id: "session.continue",
+        title: "Continue session",
+        description: "Alias for retrying a stuck session",
+        slash: "continue",
+        disabled: !params.id || visibleUserMessages().length === 0,
+        onSelect: async () => {
+          const sessionID = params.id
+          if (!sessionID) return
+          const model = local.model.current()
+          if (!model) {
+            showToast({
+              title: language.t("toast.model.none.title"),
+              description: language.t("toast.model.none.description"),
+            })
+            return
+          }
+          await sdk.client.session.retry({
+            sessionID,
+            agent: local.agent.current().name,
+            model: {
+              providerID: model.provider.id,
+              modelID: model.id,
+            },
+            variant: local.model.variant.current(),
+          })
+        },
+      }),
+      sessionCommand({
         id: "session.compact",
         title: language.t("command.session.compact"),
         description: language.t("command.session.compact.description"),

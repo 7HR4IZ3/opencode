@@ -158,6 +158,9 @@ export namespace SessionPrompt {
   })
   export type PromptInput = z.infer<typeof PromptInput>
 
+  export const CONTINUE =
+    "Continue from where you left off. If the last response was interrupted, resume the incomplete work without repeating finished steps."
+
   export const prompt = fn(PromptInput, async (input) => {
     const session = await Session.get(input.sessionID)
     await SessionRevert.cleanup(session)
@@ -269,6 +272,37 @@ export namespace SessionPrompt {
     SessionStatus.set(sessionID, { type: "idle" })
     return
   }
+
+  export const ContinueInput = z.object({
+    sessionID: SessionID.zod,
+    messageID: MessageID.zod.optional(),
+    model: z
+      .object({
+        providerID: ProviderID.zod,
+        modelID: ModelID.zod,
+      })
+      .optional(),
+    agent: z.string().optional(),
+    variant: z.string().optional(),
+  })
+  export type ContinueInput = z.infer<typeof ContinueInput>
+  export const retry = fn(ContinueInput, async (input) => {
+    if (SessionStatus.get(input.sessionID).type !== "idle") cancel(input.sessionID)
+    return prompt({
+      sessionID: input.sessionID,
+      messageID: input.messageID,
+      model: input.model,
+      agent: input.agent,
+      variant: input.variant,
+      parts: [
+        {
+          id: PartID.ascending(),
+          type: "text",
+          text: CONTINUE,
+        },
+      ],
+    })
+  })
 
   export const LoopInput = z.object({
     sessionID: SessionID.zod,

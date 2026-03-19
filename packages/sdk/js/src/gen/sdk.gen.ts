@@ -648,6 +648,22 @@ class Session extends _HeyApiClient {
   }
 
   /**
+   * Retry session
+   *
+   * Abort a stuck run if needed and ask the agent to continue from the last incomplete step.
+   */
+  public retry<ThrowOnError extends boolean = false>(options: Options<SessionRetryData, ThrowOnError>) {
+    return (options.client ?? this._client).post<SessionRetryResponses, SessionRetryErrors, ThrowOnError>({
+      url: "/session/{id}/retry",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    })
+  }
+
+  /**
    * Send a new command to a session
    */
   public command<ThrowOnError extends boolean = false>(options: Options<SessionCommandData, ThrowOnError>) {

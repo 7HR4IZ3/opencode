@@ -851,6 +851,47 @@ export const SessionRoutes = lazy(() =>
       },
     )
     .post(
+      "/:sessionID/retry",
+      describeRoute({
+        summary: "Retry session",
+        description: "Abort a stuck run if needed and ask the agent to continue from the last incomplete step.",
+        operationId: "session.retry",
+        responses: {
+          200: {
+            description: "Created message",
+            content: {
+              "application/json": {
+                schema: resolver(
+                  z.object({
+                    info: MessageV2.Assistant,
+                    parts: MessageV2.Part.array(),
+                  }),
+                ),
+              },
+            },
+          },
+          ...errors(400, 404),
+        },
+      }),
+      validator(
+        "param",
+        z.object({
+          sessionID: SessionID.zod,
+        }),
+      ),
+      validator("json", SessionPrompt.ContinueInput.omit({ sessionID: true })),
+      async (c) => {
+        c.status(200)
+        c.header("Content-Type", "application/json")
+        return stream(c, async (stream) => {
+          const sessionID = c.req.valid("param").sessionID
+          const body = c.req.valid("json")
+          const msg = await SessionPrompt.retry({ ...body, sessionID })
+          stream.write(JSON.stringify(msg))
+        })
+      },
+    )
+    .post(
       "/:sessionID/command",
       describeRoute({
         summary: "Send command",
